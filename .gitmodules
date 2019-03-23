@@ -1,0 +1,3 @@
+[submodule "FlipItApp"]
+	path = FlipItApp
+	url = https://github.com/rest597/FlipItApp.git
