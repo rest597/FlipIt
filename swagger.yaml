@@ -1,0 +1,107 @@
+swagger: "2.0"
+info:
+  description: "This is a basic REST API specification for the Supercharge JavaScript homework."
+  version: "1.0.0"
+  title: "FlipIt"
+  contact:
+    email: "attila.olah@supercharge.io"
+tags:
+- name: "game"
+- name: "score"
+paths:
+  /game/{size}:
+    get:
+      tags:
+      - "game"
+      summary: "Get a random set of cards for the game"
+      description: ""
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "size"
+        in: "path"
+        description: "Number of cards available in the current game"
+        required: true
+        type: "integer"
+        minimum: 5.0
+        maximum: 20.0
+        format: "int64"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Game"
+        400:
+          description: "Invalid input"
+  /score:
+    post:
+      tags:
+      - "score"
+      summary: "Submit a score"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      parameters:
+      - in: "body"
+        name: "body"
+        description: "Data describing the result of a game"
+        required: true
+        schema:
+          $ref: "#/definitions/ScoreRequest"
+      responses:
+        200:
+          description: "Data successfully saved in the database"
+          schema:
+            $ref: "#/definitions/ScoreResponse"
+    get:
+      tags:
+        - "score"
+      summary: "Sorted list of scores (highscores)"
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Score"
+definitions:
+  Game:
+    type: "object"
+    properties:
+      pictures:
+        type: "array"
+        items:
+          type: "string"
+      token:
+        type: "string"
+  Score:
+    type: "object"
+    properties:
+      steps:
+        type: "integer"
+        format: "int64"
+      seconds:
+        type: "integer"
+        format: "int64"
+      name:
+        type: "string"
+  ScoreRequest:
+    allOf:
+      - $ref: "#/definitions/Score"
+      - type: "object"
+      - properties:
+          token:
+            type: "string"
+  ScoreResponse:
+    type: "object"
+    properties:
+      position:
+        type: "integer"
+        format: "int64"
