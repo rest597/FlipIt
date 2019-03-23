@@ -4,6 +4,7 @@ import * as logger from 'morgan';
 import log from './services/LogManager';
 import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
+import * as cors from 'cors';
 import { isCelebrate } from 'celebrate';
 
 import ApiGameRouter from './routes/ApiGameRouter';
@@ -36,6 +37,7 @@ class App {
 
   // Configure Express middleware.
   private middleware(): void {
+    this.express.use(cors())
     this.express.use(logger('common'));
     this.express.use(bodyParser.json({ limit: '10mb' }));
   }

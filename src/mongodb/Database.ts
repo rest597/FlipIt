@@ -35,5 +35,9 @@ export class Database {
     return new Score(score).save();
   }
 
+  public static getHighScore(): Promise<IScoreModel[]> {
+    let Score = Database.connection.model<IScoreModel>('Score', scoreSchema);
+    return Score.find().sort({seconds: 1}).limit(20).exec();
+  }
 
 }

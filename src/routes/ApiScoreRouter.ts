@@ -14,8 +14,8 @@ export class ApiScoreRouter {
 
   public submitScore(req: Request, res: Response, next: NextFunction) {
     Database.getGame(req.body.token)
-      .then(game => {
-        if (game == null) {
+      .then(data => {
+        if (data == null) {
           next(new Error(400, 'Invalid input'));
           return;
         }
@@ -58,18 +58,17 @@ export class ApiScoreRouter {
   }
 
   public getHighscores(req: Request, res: Response, next: NextFunction) {
-    const temp = [
-      {
-        steps: 0,
-        seconds: 0,
-        name: 'string'
-      }
-    ];
-
-    res
-      .status(200)
-      .json(temp)
-      .send();
+    Database.getHighScore()
+      .then(data => {
+        res
+          .status(200)
+          .json(data)
+          .send();
+      })
+      .catch(err => {
+        next(new Error(400, 'Invalid input'));
+        return;
+      });
   }
 
   init() {
