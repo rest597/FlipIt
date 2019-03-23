@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import * as Joi from 'joi';
 import { celebrate as joiValidator, errors } from 'celebrate';
+import { Database } from '../mongodb/Database';
+import Error from '../services/ErrorManager';
 
 export class ApiScoreRouter {
   router: Router;
@@ -11,14 +13,48 @@ export class ApiScoreRouter {
   }
 
   public submitScore(req: Request, res: Response, next: NextFunction) {
-    const temp = {
-      position: 0
-    };
+    Database.getGame(req.body.token)
+      .then(game => {
+        if (game == null) {
+          next(new Error(400, 'Invalid input'));
+          return;
+        }
 
-    res
-      .status(200)
-      .json(temp)
-      .send();
+        Database.deleteGame(req.body.token);
+
+        Database.createScore({
+          seconds: req.body.seconds,
+          steps: req.body.steps,
+          name: req.body.name
+        })
+          .then(() => {
+            const ret = {
+              position: 1
+            };
+
+            res
+              .status(200)
+              .json(ret)
+              .send();
+          })
+          .catch(() => {
+            next(new Error(500, 'Internal error'));
+            return;
+          });
+
+        const ret = {
+          position: 1
+        };
+
+        res
+          .status(200)
+          .json(ret)
+          .send();
+      })
+      .catch(() => {
+        next(new Error(400, 'Invalid input'));
+        return;
+      });
   }
 
   public getHighscores(req: Request, res: Response, next: NextFunction) {

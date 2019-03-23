@@ -1,24 +1,21 @@
 import * as express from 'express';
+import * as path from 'path';
 import * as logger from 'morgan';
 import log from './services/LogManager';
 import * as bodyParser from 'body-parser';
 import * as dotenv from 'dotenv';
-// import { isCelebrate } from 'celebrate';
+import { isCelebrate } from 'celebrate';
 
 import ApiGameRouter from './routes/ApiGameRouter';
 import ApiScoreRouter from './routes/ApiScoreRouter';
 import { Database } from './mongodb/Database';
 import Error from './services/ErrorManager';
 
-
-
 // Creates and configures an ExpressJS web server.
 class App {
   // ref to Express instance
   public express: express.Application;
-
-  // API version
-  apiVersion: string;
+  public staticHandler: express.Handler;
 
   //Run configuration methods on the Express instance.
   constructor() {
@@ -27,9 +24,9 @@ class App {
     log.info('FlipIt backend service started!');
     log.info('Environment: ' + process.env);
 
-    this.apiVersion = process.env.API_VERSION || '/v1';
-
     this.express = express();
+    this.staticHandler = express.static(path.join(__dirname, '../assets'));
+
     this.middleware();
 
     Database.init(process.env.MONGO_CONNECTION_STRING);
@@ -50,10 +47,17 @@ class App {
     res: express.Response,
     next: express.NextFunction
   ): void {
-    if (err) {
+    if (err && typeof err.getErrorObject === 'function') {
       const error: Error = err as Error;
       log.error(error.getMessage());
-      res.status(error.getStatusCode()).send(error.getMessage());
+      res.status(error.getStatusCode()).json(new Error(error.getStatusCode(), 'Invalid input').getErrorObject());
+    } else if (isCelebrate(err)) {
+      const error: Error = new Error(400, err.message);
+      log.error(error.getMessage());
+      res.status(error.getStatusCode()).json(new Error(error.getStatusCode(), 'Invalid input').getErrorObject());
+    } else if (err) {
+      log.error(err);
+      res.status(400);
     } else {
       res.status(500);
     }
@@ -72,8 +76,9 @@ class App {
 
   // Configure API endpoints.
   private routes(): void {
-    this.express.use('/api' + this.apiVersion + '/game', ApiGameRouter);
-    this.express.use('/api' + this.apiVersion + '/score', ApiScoreRouter);
+    this.express.use('/card', this.staticHandler);
+    this.express.use('/game', ApiGameRouter);
+    this.express.use('/score', ApiScoreRouter);
     this.express.use('*', this.notFoundHandler);
     this.express.use(this.errorHandler);
   }
